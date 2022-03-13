@@ -1,30 +1,30 @@
 #include <Keyboard.h>
 
+int cols[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
+int rows[] = {A0, A1, A2, A3, A4};
 void setup() {
   // put your setup code here, to run once:
-  pinMode(7, OUTPUT);
-  pinMode(8, OUTPUT);
-  pinMode(9, OUTPUT);
-  pinMode(A0, INPUT);
-  pinMode(A1, INPUT);
-  pinMode(A3, INPUT);
+  for (int r = 0; r < sizeof(rows)/sizeof(int); r++) {
+    pinMode(rows[r], INPUT);
+  }
+  for (int c = 0; c < sizeof(cols)/sizeof(int); c++) {
+    pinMode(cols[c], OUTPUT);
+  }
   Serial.begin(9600);
 
   Keyboard.begin();
 }
 
-int cols[] = {9, 8, 7};
-int rows[] = {A1, A2, A3};
 
 
 char keys[] = {
-  '`', '1', '2', '3', '4', '5', '6', '7', '8', '9' '0', '-', '=' 0xB2, // BS
-  0xB3, 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p' '[', ']', 0xB0,  // TAB, RETURN
-  0xC1, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';' "'", "#", // CAPS
-  0x81, "|", 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0x85 // L/R SHIFT
-  0x80, 0x83, 0x82, 0x20, 0x86, 0x87, 0x84,
+  '`',  '1',  '2',  '3',  '4',  '5',  '6', '7', '8', '9', '0', '-', '=',  0xB2, // BS
+  0xB3, 'Q',  'w',  'e',  'r',  't',  'y', 'u', 'i', 'O', 'p', '[', ']',  0xB0,  // TAB, RETURN
+  0xC1, 'A',  's',  'd',  'f',  'g',  'h', 'j', 'k', 'l', ';', "'", "#",  0x0,  // CAPS
+  0x81, "|",  'z',  'x',  'c',  'v',  'b', 'n', 'm', ',', '.', '/', 0x85, 0x0,// L/R SHIFT
+  0x80, 0x83, 0x82, 0x20, 0x86, 0x87, 0x84
 }; 
-// Bitmask
+// Bitmask`                                     
 
 uint64_t prev_mask = 0x0, curr_mask = 0x0;
 
@@ -42,22 +42,14 @@ void loop() {
         Serial.print(" Column ");
         Serial.print(c);
         Serial.println(" pressed");
-        curr_mask |= (unsigned int)((unsigned int)0x1 << (r * 5 + c));
+        Serial.println(keys[((r*14)+c)]);Serial.println(((r*14)+c));
+        curr_mask |= (uint64_t)((uint64_t)0x1 << ((r*14)+c));
       }
 
     }
     digitalWrite(cols[c], LOW);
 
   }
-  for (int i = 0; i < 64; i++) {
-    if (curr_mask >> i & 0x1) {
-      Serial.print("1");
-    }
-    else {
-      Serial.print("0");
-    }
-  }
-  Serial.print("\n");
   // Find which keys to press
 
   uint64_t new_mask = (~prev_mask) & curr_mask;
@@ -66,28 +58,26 @@ void loop() {
 
   for (int i = 0; i < 64; i++) {
     // bit shift mask and compare with 1_16
-    if (old_mask >> i & 0x1) {
+    
+    if ((old_mask >> i) &  (unsigned int)0x1) {
       Keyboard.release(keys[i]);
-    }
+      Serial.print("Releasing");
+      Serial.print(i);
+      Serial.print("\n");
+    }                                                                         
   }
   for (int i = 0; i < 64; i++) {
     if (new_mask >> i & 0x1) {
       Keyboard.press(keys[i]);
+      Serial.print("Pressing");
+      Serial.print(i);
+      Serial.print("\n");
     }
   }
   //
   //
   //
   
-  
-  for (int i = 0; i < 64; i++) {
-    if (curr_mask >> i & 0x1) {
-      Serial.print("1");
-    }
-    else {
-      Serial.print("0");
-    }
-  }
 
   prev_mask = curr_mask;
   curr_mask = 0x0;
