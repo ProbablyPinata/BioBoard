@@ -1,21 +1,19 @@
 #include <Keyboard.h>
-
-int cols[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
+//4444444444444444444444444444444444444444444444444444444444444444444444444444444444
+#define THRESHOLD_UP 10
+int cols[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
 int rows[] = {A0, A1, A2, A3, A4};
-void setup() {
+void setup() {//0000000000000000000000
   // put your setup code here, to run once:
-  for (int r = 0; r < sizeof(rows)/sizeof(int); r++) {
+  for (int r = 0; r < sizeof(rows) / sizeof(int); r++) {
     pinMode(rows[r], INPUT);
   }
-  for (int c = 0; c < sizeof(cols)/sizeof(int); c++) {
+  for (int c = 0; c < sizeof(cols) / sizeof(int); c++) {
     pinMode(cols[c], OUTPUT);
   }
   Serial.begin(9600);
-
   Keyboard.begin();
 }
-
-
 
 char keys[] = {
   '`',  '1',  '2',  '3',  '4',  '5',  '6', '7', '8', '9', '0', '-', '=',  0xB2, // BS
@@ -23,8 +21,8 @@ char keys[] = {
   0xC1, 'A',  's',  'd',  'f',  'g',  'h', 'j', 'k', 'l', ';', "'", "#",  0x0,  // CAPS
   0x81, "|",  'z',  'x',  'c',  'v',  'b', 'n', 'm', ',', '.', '/', 0x85, 0x0,// L/R SHIFT
   0x80, 0x83, 0x82, 0x20, 0x86, 0x87, 0x84
-}; 
-// Bitmask`                                     
+};
+// Bitmask`
 
 uint64_t prev_mask = 0x0, curr_mask = 0x0;
 
@@ -34,16 +32,20 @@ void loop() {
   for (int c = 0; c < 14; c++) {
     digitalWrite(cols[c], HIGH);
 
-    // 
+    //
     for (int r = 0; r < 5; r++) {
-      if (digitalRead(rows[r]) == HIGH) {
+      int ar = analogRead(rows[r]);
+      if (ar > 0) {
+        Serial.print(ar);
+        Serial.print("\n");
+      }
+      if (ar > THRESHOLD_UP) {
         Serial.print("Row ");
         Serial.print(r);
         Serial.print(" Column ");
         Serial.print(c);
-        Serial.println(" pressed");
-        Serial.println(keys[((r*14)+c)]);Serial.println(((r*14)+c));
-        curr_mask |= (uint64_t)((uint64_t)0x1 << ((r*14)+c));
+        Serial.print(" pressed");
+        curr_mask |= (uint64_t)((uint64_t)0x1 << ((r * 14) + c));
       }
 
     }
@@ -58,13 +60,13 @@ void loop() {
 
   for (int i = 0; i < 64; i++) {
     // bit shift mask and compare with 1_16
-    
+
     if ((old_mask >> i) &  (unsigned int)0x1) {
       Keyboard.release(keys[i]);
       Serial.print("Releasing");
       Serial.print(i);
       Serial.print("\n");
-    }                                                                         
+    }
   }
   for (int i = 0; i < 64; i++) {
     if (new_mask >> i & 0x1) {
@@ -77,7 +79,7 @@ void loop() {
   //
   //
   //
-  
+
 
   prev_mask = curr_mask;
   curr_mask = 0x0;
